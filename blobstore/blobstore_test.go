@@ -19,7 +19,6 @@ import (
 	"github.com/flynn/flynn/blobstore/data"
 	"github.com/flynn/flynn/pkg/postgres"
 	"github.com/flynn/flynn/pkg/random"
-	"github.com/flynn/flynn/pkg/shutdown"
 	"github.com/flynn/flynn/pkg/testutils/postgres"
 	"github.com/jackc/pgx"
 )
@@ -363,7 +362,8 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 			path := srv.URL + "/foo/bar/" + random.Hex(16)
 			res, err := http.Get(path)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 404 {
@@ -372,7 +372,8 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 			res, err = http.Head(path)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 404 {
@@ -382,12 +383,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 			data := strings.Repeat(random.Hex(15), 350000)
 			req, err := http.NewRequest("PUT", path, strings.NewReader(data))
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			req.Header.Set("Content-Type", "text/plain")
 			res, err = http.DefaultClient.Do(req)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 200 {
@@ -396,12 +399,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 			res, err = http.Get(path)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			resData, err := ioutil.ReadAll(res.Body)
 			res.Body.Close()
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			if res.StatusCode != 200 {
 				t.Errorf("Expected 200 for GET, got %d", res.StatusCode)
@@ -412,7 +417,8 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 			res, err = http.Head(path)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 200 {
@@ -432,12 +438,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 				}
 				req, err := http.NewRequest("GET", path, nil)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					return
 				}
 				req.Header.Set("If-None-Match", etag)
 				res, err = http.DefaultClient.Do(req)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					return
 				}
 				res.Body.Close()
 				if res.StatusCode != http.StatusNotModified {
@@ -448,12 +456,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 			newPath := srv.URL + "/foo/bar/" + random.Hex(16)
 			req, err = http.NewRequest("PUT", newPath, nil)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			req.Header.Set("Blobstore-Copy-From", strings.TrimPrefix(path, srv.URL))
 			res, err = http.DefaultClient.Do(req)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 200 {
@@ -461,12 +471,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 			}
 			res, err = http.Get(newPath)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			resData, err = ioutil.ReadAll(res.Body)
 			res.Body.Close()
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			if res.StatusCode != 200 {
 				t.Errorf("Expected 200 for copy GET, got %d", res.StatusCode)
@@ -478,12 +490,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 			newData := random.Hex(32)
 			req, err = http.NewRequest("PUT", path, strings.NewReader(newData))
 			if err != nil {
-				shutdown.Fatal(err)
+				t.Error(err)
+				return
 			}
 			req.Header.Set("Content-Type", "application/text")
 			res, err = http.DefaultClient.Do(req)
 			if err != nil {
-				shutdown.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 200 {
@@ -497,12 +511,14 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 					defer wg2.Done()
 					res, err := http.Get(path)
 					if err != nil {
-						t.Fatal(err)
+						t.Error(err)
+						return
 					}
 					resData, err := ioutil.ReadAll(res.Body)
 					res.Body.Close()
 					if err != nil {
-						t.Fatal(err)
+						t.Error(err)
+						return
 					}
 					if res.StatusCode != 200 {
 						t.Errorf("Expected 200 for update GET, got %d", res.StatusCode)
@@ -513,7 +529,8 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 					res, err = http.Head(path)
 					if err != nil {
-						t.Fatal(err)
+						t.Error(err)
+						return
 					}
 					res.Body.Close()
 					if res.StatusCode != 200 {
@@ -533,11 +550,13 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 			req, err = http.NewRequest("DELETE", path, nil)
 			if err != nil {
-				shutdown.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res, err = http.DefaultClient.Do(req)
 			if err != nil {
-				shutdown.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 200 {
@@ -546,7 +565,8 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 			res, err = http.Get(path)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 404 {
@@ -555,7 +575,8 @@ func testFilesystem(r *data.FileRepo, testMeta bool, t *testing.T) {
 
 			res, err = http.Head(path)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 			res.Body.Close()
 			if res.StatusCode != 404 {

@@ -29,7 +29,7 @@ func (c *BaseCluster) FindCredentials() (*Credential, error) {
 	return c.installer.FindCredentials(c.CredentialID)
 }
 
-func (c *BaseCluster) HandleAuthenticationFailure(cluster Cluster, err error) bool {
+func (c *BaseCluster) HandleAuthenticationFailure(cluster Cluster, authErr error) bool {
 	credentialID := c.CredentialPrompt("Authentication failed, please select a new credential to continue")
 	credential, err := c.installer.FindCredentials(credentialID)
 	if err != nil {
@@ -628,6 +628,7 @@ func (c *BaseCluster) bootstrapTarget(t *TargetServer) error {
 		CACert string `json:"ca_cert"`
 	}
 	output := json.NewDecoder(stdout)
+outer:
 	for {
 		var stepRaw json.RawMessage
 		if err := output.Decode(&stepRaw); err != nil {
@@ -662,7 +663,7 @@ func (c *BaseCluster) bootstrapTarget(t *TargetServer) error {
 				return err
 			}
 		case "log-complete":
-			break
+			break outer
 		}
 	}
 

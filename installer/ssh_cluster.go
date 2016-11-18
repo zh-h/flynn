@@ -144,11 +144,11 @@ type privateKeySigner struct {
 	base *BaseCluster
 }
 
-func (p privateKeySigner) Passphrase() string {
+func (p *privateKeySigner) Passphrase() string {
 	return p.base.PromptProtectedInput(fmt.Sprintf("Please enter the passphrase to decrypt the key: %s", p.path))
 }
 
-func (p privateKeySigner) Decrypt() (ssh.Signer, error) {
+func (p *privateKeySigner) Decrypt() (ssh.Signer, error) {
 	if p.key == nil {
 		pem, err := x509.DecryptPEMBlock(p.pem, []byte(p.Passphrase()))
 		if err != nil {
@@ -163,7 +163,7 @@ func (p privateKeySigner) Decrypt() (ssh.Signer, error) {
 	return ssh.NewSignerFromKey(p.key)
 }
 
-func (p privateKeySigner) PublicKey() ssh.PublicKey {
+func (p *privateKeySigner) PublicKey() ssh.PublicKey {
 	return p.publicKey
 }
 
@@ -178,7 +178,7 @@ func (p privateKeySigner) Sign(rand io.Reader, data []byte) (*ssh.Signature, err
 
 // sort []privateKeySigner with unencrypted keys first,
 // and encrypted keys with public keys before those without
-type decryptedFirst []privateKeySigner
+type decryptedFirst []*privateKeySigner
 
 func (s decryptedFirst) Len() int      { return len(s) }
 func (s decryptedFirst) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
@@ -192,7 +192,7 @@ func (s decryptedFirst) Less(i, j int) bool {
 	return s[i].publicKey != nil && s[j].publicKey == nil
 }
 
-func (c *SSHCluster) findSSHKeySigners() (signers []privateKeySigner) {
+func (c *SSHCluster) findSSHKeySigners() (signers []*privateKeySigner) {
 	keyDir := filepath.Join(c.sshDir())
 	if stat, err := os.Stat(keyDir); err != nil || !stat.IsDir() {
 		return
@@ -212,7 +212,7 @@ func (c *SSHCluster) findSSHKeySigners() (signers []privateKeySigner) {
 		if b == nil {
 			return nil
 		}
-		s := privateKeySigner{
+		s := &privateKeySigner{
 			base:      c.base,
 			path:      path,
 			pem:       b,
@@ -370,7 +370,7 @@ func (c *SSHCluster) findSSHAuth() error {
 		}
 	}
 
-	var signers []privateKeySigner
+	var signers []*privateKeySigner
 
 signerloop:
 	for _, s := range c.findSSHKeySigners() {

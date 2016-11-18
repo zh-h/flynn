@@ -894,6 +894,7 @@ func (s *CLISuite) TestRelease(t *c.C) {
 	t.Assert(envLog, SuccessfulOutputContains, "ENV_UPDATE=QUUX")
 	t.Assert(envLog, c.Not(SuccessfulOutputContains), "ECHOER_ONLY=BAR")
 	t.Assert(envLog, c.Not(SuccessfulOutputContains), "ECHOER_UPDATE=BAT")
+	t.Assert(scaleCmd, Succeeds)
 }
 
 func (s *CLISuite) TestLimits(t *c.C) {

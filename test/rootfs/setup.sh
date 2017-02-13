@@ -227,6 +227,13 @@ git clone https://github.com/sstephenson/bats.git "${tmpdir}/bats"
 curl -fsLo "/usr/local/bin/jq" "http://stedolan.github.io/jq/download/linux64/jq"
 chmod +x "/usr/local/bin/jq"
 
+# install protobuf compiler
+curl -sL https://github.com/google/protobuf/releases/download/v3.0.0/protoc-3.0.0-linux-x86_64.zip > ~/protoc.zip
+trap "rm ~/protoc.zip" EXIT
+unzip -d ~/protoc protoc.zip
+mv protoc /opt
+ln -s /opt/protoc/bin/protoc /usr/local/bin/protoc
+
 # cleanup
 apt-get autoremove -y
 apt-get clean

@@ -187,7 +187,7 @@ func (s *LogAggregatorTestSuite) TestAPIGetLogFollow(c *C) {
 }
 
 func (s *LogAggregatorTestSuite) TestNewMessageFromSyslog(c *C) {
-	timestamp, err := time.Parse(time.RFC3339Nano, "2009-11-10T23:00:00.123450789Z")
+	timestamp, err := time.Parse(time.RFC3339Nano, "2009-11-10T23:00:00.123450Z")
 	c.Assert(err, IsNil)
 	m := NewMessageFromSyslog(rfc5424.NewMessage(
 		&rfc5424.Header{
@@ -208,7 +208,7 @@ func (s *LogAggregatorTestSuite) TestNewMessageFromSyslog(c *C) {
 }
 
 func (s *LogAggregatorTestSuite) TestMessageMarshalJSON(c *C) {
-	timestamp, err := time.Parse(time.RFC3339Nano, "2009-11-10T23:00:00.123450789Z")
+	timestamp, err := time.Parse(time.RFC3339Nano, "2009-11-10T23:00:00.123450Z")
 	c.Assert(err, IsNil)
 
 	m := client.Message{
